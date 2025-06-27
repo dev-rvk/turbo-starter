@@ -1,47 +1,47 @@
 # SAAS Turborepo Template
 
-A modern, full-stack SAAS starter template built with Turborepo, featuring Next.js, Better Auth, Prisma, and Shadcn UI. This monorepo template provides a solid foundation for building scalable SAAS applications.
+A modern, full-stack SAAS starter template built with Turborepo, featuring Next.js, Better Auth, Prisma, and Shadcn UI. This monorepo provides a solid foundation for scalable SAAS applications.
 
 ## 🚀 Features
 
-- **Monorepo Architecture**: Built with Turborepo for optimal development experience
-- **Modern Stack**:
-  - Next.js for the frontend
-  - Better Auth for authentication
-  - Prisma for database management
-  - Shadcn UI for beautiful, accessible components
-- **Type Safety**: Full TypeScript support
-- **Code Quality**: ESLint and Prettier for consistent code style
-- **Package Management**: PNPM for efficient dependency management
+- **Monorepo** with Turborepo
+- **Next.js** frontend
+- **Better Auth** for authentication
+- **Prisma** for database
+- **Shadcn UI** for components
+- **TypeScript** throughout
+- **ESLint** and **Prettier** for code quality
+- **Bun** for fast, modern package management
 
 ## 📦 Project Structure
 
 ```
-saas-turbo/
+turbo-starter/
 ├── apps/
-│   ├── app/      # Main application
-│   ├── studio/   # Admin dashboard
-│   └── web/      # Marketing website
-├── packages/     # Shared packages and configurations
+│ ├── app/ # Main application
+│ ├── studio/ # Admin dashboard
+│ └── web/ # Marketing website
+├── packages/ # Shared packages and configurations
 └── ...
 ```
 
+
 ## 🛠️ Prerequisites
 
-- Node.js >= 20
-- PNPM >= 10.4.1
+- [Bun](https://bun.sh/) >= 1.0.0
+- Node.js >= 20 (for some tools)
 
 ## 🚀 Getting Started
 
 1. **Clone the repository**
    ```bash
-   git clone 
-   cd saas-turbo
+   git clone <your-repo-url>
+   cd turbo-starter
    ```
 
 2. **Install dependencies**
    ```bash
-   pnpm install
+   bun install
    ```
 
 3. **Set up environment variables**
@@ -50,93 +50,51 @@ saas-turbo/
 
 4. **Start the development server**
    ```bash
-   pnpm dev
+   bun run dev
    ```
 
-## 📝 Available Scripts
+## 📝 Scripts
 
-- `pnpm dev` - Start development server
-- `pnpm build` - Build all applications and packages
-- `pnpm lint` - Run ESLint
-- `pnpm format` - Format code with Prettier
+- `bun run dev` — Start development server
+- `bun run build` — Build all apps and packages
+- `bun run lint` — Run ESLint
+- `bun run format` — Format code with Prettier
 
 ## Usage Guide
 
-1. **packages/auth**
-   - Exports:
-      - `@repo/auth/client` which is a better auth client exporting `signIn`, `signOut`, `signUp`, `useSession`, `resetPassword`, `forgetPassword`
-      - `@repo/auth/server` which exports `better-auth` instance to be used in the server component.
-      - `@repo/auth/actions` which has augmented functions which check for the users in the database and return either the error message in case the form data is violated. 
-   - Setup the env variables in the respective app directory and then run `pnpm run auth:db:generate` to generate User and Account Schema in your database `@repo/db`, make sure you migrate the database after that.
-   - exports  `better-auth/client` and `better-auth/server`
-   - `client` exports functions `signIn, signOut, signUp, useSession, resetPassword, forgetPassword`
-   - The `apps/app/lib/actions.ts` file exports two functions to signin, signup the user from the FormData.
-   - Reset Password: in `auth/setver.ts`, for email and password login, reset link is sent using the send `sendResetPasswordEmail` defined in the `@repo/email`
-
-
-2. **packages/db**
-   - exprots prisma client as prisma
-
-## 🔒 Adding Protected Routes in a New Next.js App
-
-To add protected routes and use Better Auth in a new Next.js app in this monorepo, follow these steps:
-
-### 1. Create a (protected) Route Group
-- In your new app (e.g., `apps/portal`), create a folder: `apps/portal/app/(protected)`
-- Add your protected pages inside this folder, e.g.:
+### Auth Package (`packages/auth`)
+- Exports:
+  - `@repo/auth/client`: Better Auth client (`signIn`, `signOut`, `signUp`, `useSession`, `resetPassword`, `forgetPassword`)
+  - `@repo/auth/server`: Better Auth instance for server components
+  - `@repo/auth/actions`: Functions for user actions and validation
+- Set up env variables in each app and run:
+  ```bash
+  bun run auth:db:generate
   ```
-  apps/portal/app/(protected)/dashboard/page.tsx
-  apps/portal/app/(protected)/settings/page.tsx
-  ```
+  to generate User and Account schema in `@repo/db`. Migrate your database after that.
 
-### 2. Protect the Routes
-- In each protected page, use the following pattern to require authentication and get user details:
-  ```tsx
-  import { getSession } from "@repo/auth/actions";
-  import { headers } from "next/headers";
+### DB Package (`packages/db`)
+- Exports Prisma client as `prisma`
 
-  export default async function DashboardPage() {
-    const session = await getSession(await headers());
+## 🔒 Protecting Routes in Next.js
 
-    if (!session) {
-      // Optionally, redirect or render a not-authenticated component
-      return <div>You must be signed in to view this page.</div>;
-    }
+1. **Create a (protected) Route Group**
+   - Example: `apps/app/app/(protected)/dashboard/page.tsx`
 
-    // Access user details via session.user
-    return <div>Welcome, {session.user.email}!</div>;
-  }
-  ```
-- `getSession(await headers())` fetches the current user session using the request headers.
+2. **Require Authentication in Pages**
+   ```tsx
+   import { getSession } from "@repo/auth/actions";
+   import { headers } from "next/headers";
 
-### 3. Middleware (Optional but Recommended)
-- To automatically redirect unauthenticated users, use the middleware from your `@repo/auth` package.
-- In your new app, add or update `middleware.ts`:
-  ```ts
-  export { authMiddleware as middleware } from "@repo/auth/middleware";
-  ```
-- This will protect all routes you specify in the middleware logic (e.g., those under `/dashboard`).
+   export default async function DashboardPage() {
+     const session = await getSession(await headers());
+     if (!session) return <div>You must be signed in to view this page.</div>;
+     return <div>Welcome, {session.user.email}!</div>;
+   }
+   ```
 
-### 4. Getting User Details
-- After calling `getSession`, you can access user info:
-  - `session.user.id`
-  - `session.user.email`
-  - `session.user.name`
-  - ...and any other fields you store.
-
-### 5. Example: Protecting All Routes in (protected)
-- You can update the middleware logic in `@repo/auth/middleware.ts` to match any route under `/protected`:
-  ```ts
-  const isProtectedRoute = (request: NextRequest) => {
-    return request.nextUrl.pathname.startsWith("/protected");
-  };
-  ```
-- Or, use a more flexible check as needed.
-
-
-
-
-
-
-
-
+3. **Middleware (Optional)**
+   - In your app, add or update `middleware.ts`:
+     ```ts
+     export { authMiddleware as middleware } from "@repo/auth/middleware";
+     ```
